@@ -1,79 +1,39 @@
 import { useState } from "react";
-import type { Task, Column as ColumnType } from "./types";
-import { Column } from "./Column";
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-
-const COLUMNS: ColumnType[] = [
-  { id: "TODO", title: "To Do" },
-  { id: "IN_PROGRESS", title: "In Progress" },
-  { id: "DONE", title: "Done" },
-];
-
-const INITIAL_TASKS: Task[] = [
-  {
-    id: "1",
-    title: "Research Project",
-    description: "Gather requirements and create initial documentation",
-    status: "TODO",
-  },
-  {
-    id: "2",
-    title: "Design System",
-    description: "Create component library and design tokens",
-    status: "TODO",
-  },
-  {
-    id: "3",
-    title: "API Integration",
-    description: "Implement REST API endpoints",
-    status: "IN_PROGRESS",
-  },
-  {
-    id: "4",
-    title: "Testing",
-    description: "Write unit tests for core functionality",
-    status: "DONE",
-  },
-];
+import { Button, message } from "antd";
+import { Login } from "./components/Login";
+import { TaskBoard } from "./components/TaskBoard";
+import { notify } from "./utils/notify";
 
 export default function App() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    const taskId = active.id as string;
-    const newStatus = over.id as Task["status"];
-
-    setTasks(() =>
-      tasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              status: newStatus,
-            }
-          : task
-      )
-    );
-  }
+  const handleLogout = () => {
+    setLoggedIn(false);
+    notify(messageApi, "success", "Logged out successfully");
+  };
 
   return (
-    <div className="p-4">
-      <div className="flex gap-8">
-        <DndContext onDragEnd={handleDragEnd}>
-          {COLUMNS.map((column) => {
-            return (
-              <Column
-                key={column.id}
-                column={column}
-                tasks={tasks.filter((task) => task.status === column.id)}
-              />
-            );
-          })}
-        </DndContext>
-      </div>
-    </div>
+    <>
+      {contextHolder}
+      {!loggedIn ? (
+        <Login onLogin={() => setLoggedIn(true)} />
+      ) : (
+        <div className="min-h-screen bg-gray-50 p-6">
+          <header className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Taskboard</h1>
+              <p className="text-gray-600">
+                This is a taskboard to manage your tasks easily.
+              </p>
+            </div>
+            <Button type="primary" onClick={handleLogout}>
+              Logout
+            </Button>
+          </header>
+          <TaskBoard />
+        </div>
+      )}
+    </>
   );
 }

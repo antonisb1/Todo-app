@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
-import type { Task } from "./types";
+import type { Task } from "../types/types";
 
 type TaskCardProps = {
   task: Task;
