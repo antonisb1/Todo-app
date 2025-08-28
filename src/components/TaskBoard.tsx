@@ -4,9 +4,9 @@ import { Column } from "./Column";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 
 const COLUMNS: ColumnType[] = [
-  { id: "TODO", title: "To Do" },
-  { id: "IN_PROGRESS", title: "In Progress" },
-  { id: "DONE", title: "Done" },
+  { id: "todo", title: "To Do" },
+  { id: "in-progress", title: "In Progress" },
+  { id: "done", title: "Done" },
 ];
 
 const INITIAL_TASKS: Task[] = [
@@ -14,25 +14,25 @@ const INITIAL_TASKS: Task[] = [
     id: "1",
     title: "Research Project",
     description: "Gather requirements and create initial documentation",
-    status: "TODO",
+    status: "todo",
   },
   {
     id: "2",
     title: "Design System",
     description: "Create component library and design tokens",
-    status: "TODO",
+    status: "todo",
   },
   {
     id: "3",
     title: "API Integration",
     description: "Implement REST API endpoints",
-    status: "IN_PROGRESS",
+    status: "in-progress",
   },
   {
-    id: "4",
+    id: "412",
     title: "Testing",
     description: "Write unit tests for core functionality",
-    status: "DONE",
+    status: "done",
   },
 ];
 

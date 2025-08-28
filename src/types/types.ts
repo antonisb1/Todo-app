@@ -1,4 +1,4 @@
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type TaskStatus = 'todo' | 'in-progress' | 'done';
 
 export type Task = {
   id: string;
