@@ -32,7 +32,6 @@ export async function editTask(id: string, partial: Partial<Task>) {
   return res.json();  
 }
 
-
 export async function getTaskById(id: string): Promise<Task | null> {
   const token = getToken();
   const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
@@ -40,4 +39,21 @@ export async function getTaskById(id: string): Promise<Task | null> {
   });
   if (!res.ok) return null;
   return res.json() as Promise<Task>;
+}
+
+// New function to create task on backend and return created task
+export async function addTask(title: string, description: string, status: string): Promise<Task> {
+  const token = getToken();
+  const res = await fetch(`${API_BASE_URL}/tasks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ title, description, status }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to add task: ${text}`);
+  }
+  const data = await res.json();
+  // Assumes backend returns created task as { task: {...} } or task directly
+  return data.task ?? data;
 }

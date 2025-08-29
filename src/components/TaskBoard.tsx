@@ -15,7 +15,7 @@ const LS_KEY = "tasks-cache";
 export function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Load tasks: local cache first, then backend
+  // Load tasks from cache and backend once
   useEffect(() => {
     const cached = localStorage.getItem(LS_KEY);
     if (cached) {
@@ -31,12 +31,12 @@ export function TaskBoard() {
         setTasks(fresh);
         localStorage.setItem(LS_KEY, JSON.stringify(fresh));
       } catch {
-        // keep cached if fetch fails
+        // ignore fetch failure, keep cache
       }
     })();
   }, []);
 
-  // Minimal change: functional update + optimistic backend edit, revert on failure
+  // Handle drag and drop with optimistic UI and revert on failure
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
@@ -45,9 +45,9 @@ export function TaskBoard() {
     const newStatus = over.id as Task["status"];
     if (!["todo", "in-progress", "done"].includes(newStatus)) return;
 
-    let previous: Task[] = [];
+    let previousTasks: Task[] = [];
     setTasks((prev) => {
-      previous = prev;
+      previousTasks = prev;
       const next = prev.map((t) =>
         t._id === taskId ? { ...t, status: newStatus } : t
       );
@@ -57,11 +57,25 @@ export function TaskBoard() {
 
     try {
       await taskService.editTask(taskId, { status: newStatus });
-      // keep optimistic state
+      // optimistic update kept
     } catch {
-      // revert on failure
-      setTasks(previous);
-      localStorage.setItem(LS_KEY, JSON.stringify(previous));
+      setTasks(previousTasks);
+      localStorage.setItem(LS_KEY, JSON.stringify(previousTasks));
+    }
+  }
+
+  // Add task with backend API call, update local state, handle errors
+  async function addTask(title: string, description: string, status: string) {
+    try {
+      const newTask = await taskService.addTask(title, description, status);
+      setTasks((prev) => {
+        const updated = [...prev, newTask];
+        localStorage.setItem(LS_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    } catch (error) {
+      console.error("Failed to add task:", error);
+      alert("Failed to create task. Please try again.");
     }
   }
 
@@ -74,6 +88,7 @@ export function TaskBoard() {
               key={column.id}
               column={column}
               tasks={tasks.filter((task) => task.status === column.id)}
+              onCreateTask={addTask}
             />
           ))}
         </DndContext>
