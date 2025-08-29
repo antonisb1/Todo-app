@@ -72,7 +72,7 @@ export function Column({ column, tasks }: ColumnProps) {
       {/* Tasks */}
       <div ref={setNodeRef} className="flex flex-1 flex-col gap-4 p-4 mt-4">
         {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task._id} task={task} />
         ))}
       </div>
     </div>

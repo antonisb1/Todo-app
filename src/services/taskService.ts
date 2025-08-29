@@ -24,10 +24,20 @@ export async function getTasks(): Promise<Task[]> {
 
 export async function editTask(id: string, partial: Partial<Task>) {
   const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-    method: "PATCH",
+    method: "PUT",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(partial),
   });
   if (!res.ok) throw new Error("Failed to edit task");
-  return res.json();
+  return res.json();  
+}
+
+
+export async function getTaskById(id: string): Promise<Task | null> {
+  const token = getToken();
+  const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+  });
+  if (!res.ok) return null;
+  return res.json() as Promise<Task>;
 }
