@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-import { Column } from "./Column";
 import type { Task, Column as ColumnType } from "../types/types";
+import { Column } from "./Column";
 import * as taskService from "../services/taskService";
 
 const COLUMNS: ColumnType[] = [
@@ -10,89 +10,62 @@ const COLUMNS: ColumnType[] = [
   { id: "done", title: "Done" },
 ];
 
-const LS_KEY = "tasks-cache";
-
 export function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [loadingList, setLoadingList] = useState(false);
 
   useEffect(() => {
-    const cached = localStorage.getItem(LS_KEY);
-    if (cached) {
-      try {
-        setTasks(JSON.parse(cached) as Task[]);
-      } catch {}
-    }
-    (async () => {
-      try {
-        const fresh = await taskService.getTasks();
-        setTasks(fresh);
-        localStorage.setItem(LS_KEY, JSON.stringify(fresh));
-      } catch {}
-    })();
+    refetchTasks();
   }, []);
 
-  function saveCache(next: Task[]) {
-    localStorage.setItem(LS_KEY, JSON.stringify(next));
+  async function refetchTasks() {
+    setLoadingList(true);
+    try {
+      const fresh = await taskService.getTasks();
+      setTasks(fresh);
+    } finally {
+      setLoadingList(false);
+    }
   }
 
-  // DnD status move
+  // Drag-and-drop: optimistic status, then PUT, then refetch
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
+
     const taskId = String(active.id);
     const newStatus = over.id as Task["status"];
     if (!["todo", "in-progress", "done"].includes(newStatus)) return;
 
-    let prev: Task[] = [];
-    setTasks((p) => {
-      prev = p;
-      const next = p.map((t) =>
-        t._id === taskId ? { ...t, status: newStatus } : t
-      );
-      saveCache(next);
-      return next;
-    });
+    const prev = tasks;
+    setTasks(
+      prev.map((t) => (t._id === taskId ? { ...t, status: newStatus } : t))
+    );
 
     try {
       await taskService.editTask(taskId, { status: newStatus });
+      await refetchTasks(); // canonical refresh
     } catch {
-      setTasks(prev);
-      saveCache(prev);
+      setTasks(prev); // revert on error
     }
   }
 
-  // Create
+  // Create: POST then refetch
   async function addTask(title: string, description: string, status: string) {
-    const created = await taskService.addTask(title, description, status);
-    setTasks((p) => {
-      const next = [...p, created];
-      saveCache(next);
-      return next;
-    });
+    await taskService.addTask(title, description, status);
+    await refetchTasks();
   }
 
+  // Edit: PUT then refetch
   async function editTask(id: string, updates: Partial<Task>) {
-    const updated = await taskService.editTask(id, updates);
-
-    setTasks((p) => {
-      const next = p.map((t) =>
-        t._id === id
-          ? { ...t, ...updates, ...updated } // merge to keep old fields
-          : t
-      );
-      saveCache(next);
-      return next;
-    });
+    await taskService.editTask(id, updates);
+    await refetchTasks();
   }
 
-  // Delete
+  // Delete: DELETE then refetch
   async function deleteTask(id: string) {
     await taskService.removeTask(id);
-    setTasks((p) => {
-      const next = p.filter((t) => t._id !== id);
-      saveCache(next);
-      return next;
-    });
+    await refetchTasks();
   }
 
   return (
