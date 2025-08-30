@@ -57,3 +57,15 @@ export async function addTask(title: string, description: string, status: string
   // Assumes backend returns created task as { task: {...} } or task directly
   return data.task ?? data;
 }
+export async function removeTask(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+    method: "DELETE",
+    headers: { ...authHeaders() },
+  });
+  // Common patterns return 204 No Content; treat any 2xx as success
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to delete task: ${text || res.statusText}`);
+  }
+  return;
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { Task, Column as ColumnType } from "../types/types";
-import { Column } from "./Column";
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
+import { Column } from "./Column";
+import type { Task, Column as ColumnType } from "../types/types";
 import * as taskService from "../services/taskService";
 
 const COLUMNS: ColumnType[] = [
@@ -15,68 +15,84 @@ const LS_KEY = "tasks-cache";
 export function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Load tasks from cache and backend once
   useEffect(() => {
     const cached = localStorage.getItem(LS_KEY);
     if (cached) {
       try {
         setTasks(JSON.parse(cached) as Task[]);
-      } catch {
-        // ignore bad cache
-      }
+      } catch {}
     }
     (async () => {
       try {
         const fresh = await taskService.getTasks();
         setTasks(fresh);
         localStorage.setItem(LS_KEY, JSON.stringify(fresh));
-      } catch {
-        // ignore fetch failure, keep cache
-      }
+      } catch {}
     })();
   }, []);
 
-  // Handle drag and drop with optimistic UI and revert on failure
+  function saveCache(next: Task[]) {
+    localStorage.setItem(LS_KEY, JSON.stringify(next));
+  }
+
+  // DnD status move
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
-
     const taskId = String(active.id);
     const newStatus = over.id as Task["status"];
     if (!["todo", "in-progress", "done"].includes(newStatus)) return;
 
-    let previousTasks: Task[] = [];
-    setTasks((prev) => {
-      previousTasks = prev;
-      const next = prev.map((t) =>
+    let prev: Task[] = [];
+    setTasks((p) => {
+      prev = p;
+      const next = p.map((t) =>
         t._id === taskId ? { ...t, status: newStatus } : t
       );
-      localStorage.setItem(LS_KEY, JSON.stringify(next));
+      saveCache(next);
       return next;
     });
 
     try {
       await taskService.editTask(taskId, { status: newStatus });
-      // optimistic update kept
     } catch {
-      setTasks(previousTasks);
-      localStorage.setItem(LS_KEY, JSON.stringify(previousTasks));
+      setTasks(prev);
+      saveCache(prev);
     }
   }
 
-  // Add task with backend API call, update local state, handle errors
+  // Create
   async function addTask(title: string, description: string, status: string) {
-    try {
-      const newTask = await taskService.addTask(title, description, status);
-      setTasks((prev) => {
-        const updated = [...prev, newTask];
-        localStorage.setItem(LS_KEY, JSON.stringify(updated));
-        return updated;
-      });
-    } catch (error) {
-      console.error("Failed to add task:", error);
-      alert("Failed to create task. Please try again.");
-    }
+    const created = await taskService.addTask(title, description, status);
+    setTasks((p) => {
+      const next = [...p, created];
+      saveCache(next);
+      return next;
+    });
+  }
+
+  async function editTask(id: string, updates: Partial<Task>) {
+    const updated = await taskService.editTask(id, updates);
+
+    setTasks((p) => {
+      const next = p.map((t) =>
+        t._id === id
+          ? { ...t, ...updates, ...updated } // merge to keep old fields
+          : t
+      );
+      saveCache(next);
+      return next;
+    });
+  }
+
+  // Delete
+  async function deleteTask(id: string) {
+    await taskService.removeTask(id);
+    setTasks((p) => {
+      const next = p.filter((t) => t._id !== id);
+      saveCache(next);
+      return next;
+    });
   }
 
   return (
@@ -87,8 +103,10 @@ export function TaskBoard() {
             <Column
               key={column.id}
               column={column}
-              tasks={tasks.filter((task) => task.status === column.id)}
+              tasks={tasks.filter((t) => t.status === column.id)}
               onCreateTask={addTask}
+              onEditTask={editTask}
+              onDeleteTask={deleteTask}
             />
           ))}
         </DndContext>

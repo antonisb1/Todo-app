@@ -1,13 +1,19 @@
-import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { useState } from "react";
 import { TaskCard } from "./TaskCard";
+import { AddTaskModal } from "./Modals/AddTaskModal";
 import type { Column as ColumnType, Task } from "../types/types";
-import { AddTaskModal } from "./AddTaskModal";
 
 type ColumnProps = {
   column: ColumnType;
   tasks: Task[];
-  onCreateTask: (title: string, description: string, status: string) => void;
+  onCreateTask: (
+    title: string,
+    description: string,
+    status: string
+  ) => Promise<void> | void;
+  onEditTask: (id: string, updates: Partial<Task>) => Promise<void>;
+  onDeleteTask: (id: string) => Promise<void>;
 };
 
 const headerStyles: Record<
@@ -37,16 +43,17 @@ const headerStyles: Record<
   },
 };
 
-export function Column({ column, tasks, onCreateTask }: ColumnProps) {
+export function Column({
+  column,
+  tasks,
+  onCreateTask,
+  onEditTask,
+  onDeleteTask,
+}: ColumnProps) {
   const { setNodeRef } = useDroppable({ id: column.id });
   const s = headerStyles[column.id];
-
-  const [showAddModal, setShowAddModal] = useState(false);
-
-  function handleCreateTask(title: string, description: string) {
-    onCreateTask(title, description, column.id);
-    setShowAddModal(false);
-  }
+  const [showAdd, setShowAdd] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   return (
     <div className="flex w-full min-h-[calc(100vh-14rem)] flex-col rounded-xl bg-white shadow-sm border border-slate-200">
@@ -71,22 +78,37 @@ export function Column({ column, tasks, onCreateTask }: ColumnProps) {
       </div>
 
       <div ref={setNodeRef} className="flex flex-1 flex-col gap-4 p-4 mt-4">
-        {tasks.map((task) => (
-          <TaskCard key={task._id} task={task} />
+        {tasks.map((t) => (
+          <TaskCard
+            key={t._id}
+            task={t}
+            onEditTask={onEditTask}
+            onDeleteTask={onDeleteTask}
+          />
         ))}
       </div>
 
       <button
         className="mt-2 text-start text-xs px-4 py-2 bg-slate-200/70 hover:bg-slate-200 transition-colors border border-slate-200 hover:cursor-pointer"
-        onClick={() => setShowAddModal(true)}
+        onClick={() => setShowAdd(true)}
       >
         + Add item
       </button>
 
       <AddTaskModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onCreate={handleCreateTask}
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        loading={creating}
+        mode="create"
+        onSubmit={async (title, description) => {
+          try {
+            setCreating(true);
+            await onCreateTask(title, description, column.id);
+            setShowAdd(false);
+          } finally {
+            setCreating(false);
+          }
+        }}
       />
     </div>
   );
