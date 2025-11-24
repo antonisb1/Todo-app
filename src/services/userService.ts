@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
+ 
 
 export type RegisterInput = {
   name?: string;
@@ -19,7 +20,7 @@ export type RegisterResponse = {
 };
 
 export async function register(input: RegisterInput): Promise<RegisterResponse> {
-  const res = await fetch(`${API_BASE_URL}/register`, {
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
