@@ -5,6 +5,7 @@ import { Button, Space } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { DeleteConfirmModal } from "./Modals/DeleteConfirmModal";
 import { AddTaskModal } from "./Modals/AddTaskModal";
+import { useMessage } from "../providers/MessageProvider";
 
 type TaskCardProps = {
   task: Task;
@@ -25,6 +26,7 @@ export function TaskCard({ task, onEditTask, onDeleteTask }: TaskCardProps) {
 
   const [showEdit, setShowEdit] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
+  const messageApi = useMessage();
 
   return (
     <>
@@ -79,6 +81,7 @@ export function TaskCard({ task, onEditTask, onDeleteTask }: TaskCardProps) {
             setConfirmingDelete(true);
             await onDeleteTask(task._id);
             setShowDelete(false);
+            messageApi.success("Task deleted successfully");
           } finally {
             setConfirmingDelete(false);
           }
@@ -97,6 +100,7 @@ export function TaskCard({ task, onEditTask, onDeleteTask }: TaskCardProps) {
             setSavingEdit(true);
             await onEditTask(task._id, { title, description });
             setShowEdit(false);
+            messageApi.success("Task edited successfully");
           } finally {
             setSavingEdit(false);
           }
