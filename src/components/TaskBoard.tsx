@@ -12,19 +12,16 @@ const COLUMNS: ColumnType[] = [
 
 export function TaskBoard() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
 
   useEffect(() => {
     refetchTasks();
   }, []);
 
   async function refetchTasks() {
-    setLoadingList(true);
     try {
       const fresh = await taskService.getTasks();
       setTasks(fresh);
     } finally {
-      setLoadingList(false);
     }
   }
 
