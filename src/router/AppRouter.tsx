@@ -9,7 +9,7 @@ export function AppRouter() {
       <Routes>
         <Route path={ROUTES.LOGIN} element={<Login />} />
         <Route path={ROUTES.TASKBOARD} element={<TaskboardPage />} />
-        <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
+        <Route path="*" element={<Navigate to={ROUTES.TASKBOARD} replace />} />
       </Routes>
     </BrowserRouter>
   );

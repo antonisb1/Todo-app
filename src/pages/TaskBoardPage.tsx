@@ -16,7 +16,7 @@ export default function TaskboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className=" bg-slate-100  ">
       <header className=" mb-6 flex items-center justify-between bg-white shadow-md rounded-lg p-4 border border-slate-200">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Taskboard</h1>
