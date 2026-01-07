@@ -67,7 +67,7 @@ export function TaskBoard() {
 
   return (
     <div className="">
-      <div className="flex gap-3">
+      <div className="flex gap-6">
         <DndContext onDragEnd={handleDragEnd}>
           {COLUMNS.map((column) => (
             <Column
