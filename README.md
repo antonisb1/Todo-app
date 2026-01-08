@@ -85,4 +85,12 @@ Conclusion
 The application is fully deployed to Azure using best practices.
 The setup demonstrates cloud-native architecture, security, automation, and scalability.
 
+The frontend deployed in azure looks like this: 
+
+<img width="1887" height="854" alt="image" src="https://github.com/user-attachments/assets/8e170f20-5f99-4f24-8327-f2d15a95ca28" />
+
+<img width="873" height="592" alt="image" src="https://github.com/user-attachments/assets/55c030b5-249e-44ec-9cc1-644cb8ded6b8" />
+
+<img width="1911" height="855" alt="image" src="https://github.com/user-attachments/assets/dfd92f84-fe2c-4197-9206-a59b668803a6" />
+
 
